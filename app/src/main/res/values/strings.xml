@@ -10,4 +10,9 @@
     <string name="sign_out">Выход</string>
 
     <string name="account">Аккаунт</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Пароль</string>
+
+    <string name="sign_up_btn">Зарегистрироваться</string>
+    <string name="sign_in_btn">Войти</string>
 </resources>
