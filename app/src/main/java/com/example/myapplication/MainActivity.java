@@ -6,20 +6,28 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private NavigationView navView;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,13 +40,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void init(){
         navView = findViewById(R.id.nav_view);
         navView.setNavigationItemSelectedListener(this);
-
-        // Write a message to the database
-
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("table");
-
-        myRef.setValue("Hello, World!");
+        firebaseAuth = FirebaseAuth.getInstance();
     }
 
     @Override
@@ -99,6 +101,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         TextView signTitle = dialogView.findViewById(R.id.tvSignTitle);
         signTitle.setText(title);
 
+        EditText etEmail = dialogView.findViewById(R.id.etEmail);
+        EditText etPassword = dialogView.findViewById(R.id.etPassword);
+
         Button signBtn = dialogView.findViewById(R.id.signButton);
         signBtn.setText(buttonTitle);
 
@@ -110,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(MainActivity.this, "sign up", Toast.LENGTH_SHORT).show();
+                    signUp(etEmail.getText().toString(), etPassword.getText().toString());
                 }
 
             });
@@ -120,10 +125,56 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(MainActivity.this, "sign in", Toast.LENGTH_SHORT).show();
+                    signIn(etEmail.getText().toString(), etPassword.getText().toString());
                 }
 
             });
         }
+    }
+
+    private void signUp(String email, String password){
+        if (email.equals("") && password.equals("")){
+            Toast.makeText(this, "email or password empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if(task.isSuccessful()){
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        Log.d("MainActivity signUn", "Successful auth");
+                    }else {
+                        Toast.makeText(getApplicationContext(), "Authentification failed", Toast.LENGTH_SHORT).show();
+                        Log.e("Log_my_MainActivity", "Error body: ", task.getException());
+                    }
+                }
+            });
+    }
+
+    private void signIn(String email, String password){
+        if (email.equals("") && password.equals("")){
+            Toast.makeText(this, "email or password empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful()){
+                            FirebaseUser user = firebaseAuth.getCurrentUser();
+                            Log.d("MainActivity signIn", "Successful auth");
+                        }else {
+                            Toast.makeText(getApplicationContext(), "Authentification failed", Toast.LENGTH_SHORT).show();
+                            Log.e("Log_my_MainActivity", "Error body: ", task.getException());
+                        }
+                    }
+                });
+    }
+
+    private void signOut(){
+        firebaseAuth.signOut();
     }
 }
